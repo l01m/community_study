@@ -8,12 +8,8 @@ import org.springframework.stereotype.Controller;
  * Created by 25711
  */
 @Controller
-public class HelloController {
-    @GetMapping("/hello")
-    public String hello(@RequestParam(name = "name") String name, Model model){
-        model.addAttribute("name", name);
-        return "hello";
-
-    }
+public class IndexController {
+    @GetMapping("/")//单独一个/代表根目录
+    public String index(){ return "index"; }
 
 }
