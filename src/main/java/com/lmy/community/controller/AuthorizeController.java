@@ -11,16 +11,17 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import java.security.PrivateKey;
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletResponse;
 import java.util.UUID;
 
 @Controller
 public class AuthorizeController {
+    //自动生成java bean
     @Autowired
     private GithubProvider githubProvider;
 
+    //@value注解的作用是，将注解中的值注入到对应属性中
     @Value("${github.client.id}")
     private String clientId;
 
@@ -35,9 +36,10 @@ public class AuthorizeController {
 
     @GetMapping("/callback")
     //HttpServletRequest对象代表客户端的请求，当客户端通过HTTP协议访问服务器时，HTTP请求头中的所有信息都封装在这个对象中，通过这个对象提供的方法，可以获得客户端请求的所有信息
+    //@RequestParam用于将请求参数区数据映射到功能处理方法的参数上
     public String callback(@RequestParam(name = "code") String code,
                            @RequestParam(name = "state") String state,
-                           HttpServletRequest request){
+                           HttpServletResponse response){
         AccessTokenDTO accessTokenDTO = new AccessTokenDTO();
         //传递Access_Token参数
         accessTokenDTO.setCode(code);
@@ -45,6 +47,7 @@ public class AuthorizeController {
         accessTokenDTO.setClient_id(clientId);
         accessTokenDTO.setRedirect_uri(redirectUri);
         accessTokenDTO.setClient_secret(clientSecret);
+        //携带aceess_token请求页面获取服务器返回的access_token数据
         String accessToken = githubProvider.getAccessToken(accessTokenDTO);
         //解析Access_Token中的内容获取用户名
         GithubUser githubProviderUser = githubProvider.getUser(accessToken);
@@ -52,14 +55,15 @@ public class AuthorizeController {
             //将获取到的值传递到User中
             User user = new User();
             //自动随机生成id
-            user.setId(UUID.randomUUID().toString());
+            String token = UUID.randomUUID().toString();
+            user.setToken(token);
             user.setAccountId(String.valueOf(githubProviderUser.getId()));
             user.setName(githubProviderUser.getName());
             user.setGmtCreate(System.currentTimeMillis());
             user.setGmtModified(user.getGmtCreate());
             userMapper.insert(user);
             //登录成功，写入 Seesion 和Cookies
-            request.getSession().setAttribute("user", user);
+            response.addCookie(new Cookie("token", token));
             //redirect 重定向到根目录，加载默认页面
             return "redirect:/";
         }else{

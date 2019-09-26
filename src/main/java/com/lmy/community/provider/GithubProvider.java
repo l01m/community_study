@@ -8,6 +8,8 @@ import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 
+
+//把普通pojo实例化到spring容器中（pojo代表普通JavaBeans）
 @Component
 public class GithubProvider {
     /**
@@ -29,7 +31,6 @@ public class GithubProvider {
             //携带code调用github的access_token API最终获得Access_Token
             String string = response.body().string();
             String token = string.split("&")[0].split("=")[1];
-//            System.out.println(token);   token为最终返回的Access_Token串
             return token;
         } catch (Exception e) {
             e.printStackTrace();
@@ -49,6 +50,7 @@ public class GithubProvider {
                 .build();
         try (Response response = client.newCall(request).execute()) {
             String string = response.body().string();
+            //将获取到的json内容解析为GithubUser对象
             GithubUser githubUser = JSON.parseObject(string, GithubUser.class);
             return githubUser;
         } catch (IOException e) {
